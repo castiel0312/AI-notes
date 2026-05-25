@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.routes.notes import router as notes_router
+from app.routes.quiz import router as quiz_router
 
 app = FastAPI(
     title="Notes Maker",
@@ -23,6 +24,7 @@ app.add_middleware(
 )
 
 app.include_router(notes_router)
+app.include_router(quiz_router)
 
 
 @app.exception_handler(Exception)

@@ -508,3 +508,248 @@
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(124, 58, 237, 0.55);
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   Quiz Panel — matches existing dark-purple design system
+   All colours, radii, and font sizes mirror the existing result-card styles.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Quiz trigger button (sits in result-actions alongside download/audio) ── */
+.quiz-btn {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  color: #fff;
+  transition: all 0.2s;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.quiz-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.45);
+}
+
+.quiz-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── Quiz panel container — lives inside .result-card ── */
+.quiz-panel {
+  border-top: 1px solid #2a2a3e;
+  padding: 20px;
+  background: #0f0f13;
+}
+
+/* ── Quiz header row ── */
+.quiz-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.quiz-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #a78bfa;
+}
+
+.quiz-progress {
+  font-size: 13px;
+  color: #6b7280;
+  background: #1e1e30;
+  border: 1px solid #3a3a5c;
+  border-radius: 20px;
+  padding: 3px 10px;
+}
+
+/* ── Difficulty badge ── */
+.quiz-difficulty {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+}
+
+/* ── Question text ── */
+.quiz-question {
+  font-size: 15px;
+  font-weight: 600;
+  color: #f3f0ff;
+  line-height: 1.55;
+  margin-bottom: 16px;
+}
+
+/* ── Options grid ── */
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.quiz-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #13131f;
+  border: 1px solid #3a3a5c;
+  border-radius: 10px;
+  color: #d1d5db;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+  width: 100%;
+}
+
+.quiz-option:hover:not(:disabled) {
+  border-color: #7c3aed;
+  background: #1a1a2e;
+}
+
+.quiz-option-selected {
+  border-color: #7c3aed;
+  background: #1e1030;
+  color: #f3f0ff;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.25);
+}
+
+.quiz-option-correct {
+  border-color: #10b981;
+  background: #052e16;
+  color: #6ee7b7;
+}
+
+.quiz-option-wrong {
+  border-color: #ef4444;
+  background: #2d1515;
+  color: #fca5a5;
+}
+
+.quiz-option:disabled {
+  cursor: default;
+}
+
+.quiz-option-letter {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #2a2a3e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #a78bfa;
+}
+
+/* ── Explanation text ── */
+.quiz-explanation {
+  font-size: 13px;
+  color: #9ca3af;
+  background: #1a1a2e;
+  border-left: 3px solid #7c3aed;
+  border-radius: 0 8px 8px 0;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+/* ── Action row (Submit / Next) ── */
+.quiz-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ── Score / finished screen ── */
+.quiz-score-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.quiz-score-emoji {
+  font-size: 48px;
+}
+
+.quiz-score-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #f3f0ff;
+}
+
+.quiz-score-value {
+  font-size: 16px;
+  color: #a78bfa;
+  font-weight: 600;
+}
+
+/* ── Answer review list ── */
+.quiz-review {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 8px 0 16px;
+  text-align: left;
+}
+
+.quiz-review-item {
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #2a2a3e;
+  background: #13131f;
+}
+
+.quiz-review-item.correct {
+  border-color: #10b981;
+  background: #052e16;
+}
+
+.quiz-review-item.wrong {
+  border-color: #ef4444;
+  background: #2d1515;
+}
+
+.quiz-review-q {
+  font-size: 13px;
+  color: #d1d5db;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-bottom: 4px;
+}
+
+.quiz-review-badge {
+  flex-shrink: 0;
+  font-weight: 700;
+}
+
+.quiz-review-answer {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-bottom: 4px;
+  padding-left: 20px;
+}
+
+.quiz-wrong-ans  { color: #fca5a5; }
+.quiz-correct-ans { color: #6ee7b7; }
+
+.quiz-retake-btn {
+  margin-top: 4px;
+}

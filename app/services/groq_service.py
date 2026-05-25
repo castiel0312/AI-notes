@@ -51,13 +51,13 @@ def _convert_latex(text: str) -> str:
     return text
 
 
-def _call_groq(api_key: str, prompt: str, model: str) -> str:
+def _call_groq(api_key: str, prompt: str, model: str, max_tokens: int = 2048) -> str:
     """Make a single Groq API call with the given key."""
     client = Groq(api_key=api_key)
     response = client.chat.completions.create(
         model=model,
         messages=[{"role": "user", "content": prompt}],
-        max_tokens=2048,
+        max_tokens=max_tokens,
         temperature=0.3,
     )
     return response.choices[0].message.content

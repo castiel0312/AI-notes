@@ -126,6 +126,16 @@ export default function App() {
   )
   const [speaking, setSpeaking] = useState({})
 
+  // ── Quiz state ──────────────────────────────────────────────────────────────
+  // quizData: { [resultIndex]: { quiz_title, questions } | null }
+  const [quizData, setQuizData] = useState({})
+  // quizLoading: { [resultIndex]: boolean }
+  const [quizLoading, setQuizLoading] = useState({})
+  // quizError: { [resultIndex]: string | null }
+  const [quizError, setQuizError] = useState({})
+  // activeQuiz: { [resultIndex]: { current: number, selected: string|null, submitted: boolean, score: number } }
+  const [activeQuiz, setActiveQuiz] = useState({})
+
   // Map language codes to BCP-47 for Web Speech API
   const LANG_BCP47 = {
     en: 'en-IN', hi: 'hi-IN', bn: 'bn-IN', gu: 'gu-IN',
@@ -181,6 +191,11 @@ export default function App() {
     setFiles(Array.from(e.target.files))
     setResults(null)
     setError(null)
+    // Reset quiz state when new files are selected
+    setQuizData({})
+    setQuizLoading({})
+    setQuizError({})
+    setActiveQuiz({})
   }
 
   function handleDrop(e) {
@@ -189,6 +204,11 @@ export default function App() {
     setFiles(Array.from(e.dataTransfer.files))
     setResults(null)
     setError(null)
+    // Reset quiz state when new files are dropped
+    setQuizData({})
+    setQuizLoading({})
+    setQuizError({})
+    setActiveQuiz({})
   }
 
   function removeFile(index) {
@@ -202,6 +222,11 @@ export default function App() {
     setLoading(true)
     setError(null)
     setResults(null)
+    // Reset quiz state on every new notes generation
+    setQuizData({})
+    setQuizLoading({})
+    setQuizError({})
+    setActiveQuiz({})
 
     const formData = new FormData()
     files.forEach((f) => formData.append('files', f))
@@ -231,10 +256,86 @@ export default function App() {
   }
 
   function playAudio(audioUrl, key) {
-    const audio = audioRefs.current[key]
-    if (audio) {
-      audio.paused ? audio.play() : audio.pause()
+    // audioRefs not used — TTS handled by Web Speech API (speakText)
+    void audioUrl; void key;
+  }
+
+  // ── Quiz: fetch quiz for a specific result card ────────────────────────────
+  async function handleGenerateQuiz(resultIndex, filename) {
+    const fileObj = files.find(f => f.name === filename)
+    if (!fileObj) return
+
+    setQuizLoading(s => ({ ...s, [resultIndex]: true }))
+    setQuizError(s => ({ ...s, [resultIndex]: null }))
+    setQuizData(s => ({ ...s, [resultIndex]: null }))
+    setActiveQuiz(s => ({ ...s, [resultIndex]: null }))
+
+    const formData = new FormData()
+    formData.append('files', fileObj)
+
+    try {
+      const res = await fetch(`${API_BASE}/generate-quiz`, {
+        method: 'POST',
+        body: formData,
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.detail || 'Quiz generation failed')
+
+      const fileResult = data.results?.[0]
+      if (fileResult?.error) throw new Error(fileResult.error)
+      if (!fileResult?.quiz) throw new Error('No quiz returned')
+
+      setQuizData(s => ({ ...s, [resultIndex]: fileResult.quiz }))
+      setActiveQuiz(s => ({
+        ...s,
+        [resultIndex]: { current: 0, selected: null, submitted: false, score: 0, answers: [] }
+      }))
+    } catch (err) {
+      setQuizError(s => ({ ...s, [resultIndex]: err.message }))
+    } finally {
+      setQuizLoading(s => ({ ...s, [resultIndex]: false }))
     }
+  }
+
+  function handleSelectOption(resultIndex, option) {
+    setActiveQuiz(s => {
+      const q = s[resultIndex]
+      if (!q || q.submitted) return s
+      return { ...s, [resultIndex]: { ...q, selected: option } }
+    })
+  }
+
+  function handleSubmitAnswer(resultIndex) {
+    setActiveQuiz(s => {
+      const q = s[resultIndex]
+      const quiz = quizData[resultIndex]
+      if (!q || q.submitted || !q.selected) return s
+      const correct = quiz.questions[q.current].correct_answer
+      const isCorrect = q.selected === correct
+      const newAnswers = [...q.answers, { selected: q.selected, correct, isCorrect }]
+      return {
+        ...s,
+        [resultIndex]: { ...q, submitted: true, score: isCorrect ? q.score + 1 : q.score, answers: newAnswers }
+      }
+    })
+  }
+
+  function handleNextQuestion(resultIndex) {
+    setActiveQuiz(s => {
+      const q = s[resultIndex]
+      const quiz = quizData[resultIndex]
+      if (!q) return s
+      const nextIndex = q.current + 1
+      if (nextIndex >= quiz.questions.length) {
+        return { ...s, [resultIndex]: { ...q, current: nextIndex, submitted: true } }
+      }
+      return { ...s, [resultIndex]: { ...q, current: nextIndex, selected: null, submitted: false } }
+    })
+  }
+
+  function handleRetakeQuiz(resultIndex, filename) {
+    // Fetch a brand-new set of questions from the API
+    handleGenerateQuiz(resultIndex, filename)
   }
 
   return (
@@ -354,10 +455,51 @@ export default function App() {
                     {r.audio_url && (
                       <audio src={`${API_BASE}${r.audio_url}`} controls style={{ height: '32px' }} />
                     )}
+                    {/* ── Practice MCQs button — only show when notes exist ── */}
+                    {r.notes && !quizData[i] && (
+                      <button
+                        className="quiz-btn"
+                        onClick={() => handleGenerateQuiz(i, r.file)}
+                        disabled={quizLoading[i]}
+                      >
+                        {quizLoading[i]
+                          ? <><span className="spinner" /> Generating Quiz…</>
+                          : '🧠 Practice MCQs'}
+                      </button>
+                    )}
+                    {/* Re-generate quiz button once a quiz is already loaded */}
+                    {quizData[i] && (
+                      <button
+                        className="quiz-btn"
+                        onClick={() => handleGenerateQuiz(i, r.file)}
+                        disabled={quizLoading[i]}
+                      >
+                        {quizLoading[i] ? <><span className="spinner" /> Regenerating…</> : '🔄 New Quiz'}
+                      </button>
+                    )}
                   </div>
                 </div>
                 {r.warning && <p className="result-warning">⚠️ {r.warning}</p>}
                 {r.notes && <pre className="result-notes">{r.notes}</pre>}
+
+                {/* ── Quiz error ─────────────────────────────────────────── */}
+                {quizError[i] && (
+                  <div className="error-box" style={{ margin: '0 20px 16px' }}>
+                    <span>⚠️</span> {quizError[i]}
+                  </div>
+                )}
+
+                {/* ── Quiz panel ─────────────────────────────────────────── */}
+                {quizData[i] && activeQuiz[i] && (
+                  <QuizPanel
+                    quiz={quizData[i]}
+                    session={activeQuiz[i]}
+                    onSelect={(opt) => handleSelectOption(i, opt)}
+                    onSubmit={() => handleSubmitAnswer(i)}
+                    onNext={() => handleNextQuestion(i)}
+                    onRetake={() => handleRetakeQuiz(i, r.file)}
+                  />
+                )}
               </div>
             ))}
           </div>
@@ -393,4 +535,131 @@ function fileIcon(name) {
   if (name.endsWith('.pptx') || name.endsWith('.ppt')) return '📊'
   if (name.match(/\.(png|jpg|jpeg)$/i)) return '🖼️'
   return '📁'
+}
+
+// ── QuizPanel component ───────────────────────────────────────────────────────
+// Renders inside an existing result-card. Uses only existing CSS classes plus
+// quiz-specific classes defined in App.css. No layout changes to the outer app.
+function QuizPanel({ quiz, session, onSelect, onSubmit, onNext, onRetake }) {
+  const { questions, quiz_title } = quiz
+  const { current, selected, submitted, score, answers } = session
+  const isFinished = current >= questions.length
+
+  // ── Finished screen ─────────────────────────────────────────────────────────
+  if (isFinished) {
+    const total = questions.length
+    const pct = Math.round((score / total) * 100)
+    return (
+      <div className="quiz-panel">
+        <div className="quiz-score-screen">
+          <div className="quiz-score-emoji">
+            {pct >= 80 ? '🏆' : pct >= 50 ? '👍' : '📚'}
+          </div>
+          <h3 className="quiz-score-title">Quiz Complete!</h3>
+          <p className="quiz-score-value">{score} / {total} correct ({pct}%)</p>
+
+          {/* Answer review */}
+          <div className="quiz-review">
+            {questions.map((q, idx) => {
+              const ans = answers[idx]
+              return (
+                <div key={idx} className={`quiz-review-item ${ans?.isCorrect ? 'correct' : 'wrong'}`}>
+                  <p className="quiz-review-q">
+                    <span className="quiz-review-badge">{ans?.isCorrect ? '✓' : '✗'}</span>
+                    {q.question}
+                  </p>
+                  {!ans?.isCorrect && (
+                    <p className="quiz-review-answer">
+                      Your answer: <span className="quiz-wrong-ans">{ans?.selected}</span><br />
+                      Correct: <span className="quiz-correct-ans">{q.correct_answer}</span>
+                    </p>
+                  )}
+                  {q.explanation && (
+                    <p className="quiz-explanation">💡 {q.explanation}</p>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          <button className="quiz-btn quiz-retake-btn" onClick={onRetake}>
+            🔁 Retake Quiz
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Active question screen ──────────────────────────────────────────────────
+  const q = questions[current]
+  const diffColor = { easy: '#4ade80', medium: '#fbbf24', hard: '#f87171' }
+
+  return (
+    <div className="quiz-panel">
+      {/* Quiz header */}
+      <div className="quiz-header">
+        <span className="quiz-title">🧠 {quiz_title}</span>
+        <span className="quiz-progress">{current + 1} / {questions.length}</span>
+      </div>
+
+      {/* Difficulty badge */}
+      <span className="quiz-difficulty" style={{ color: diffColor[q.difficulty] || '#a78bfa' }}>
+        {q.difficulty?.toUpperCase()}
+      </span>
+
+      {/* Question */}
+      <p className="quiz-question">{q.question}</p>
+
+      {/* Options */}
+      <div className="quiz-options">
+        {q.options.map((opt, oi) => {
+          let cls = 'quiz-option'
+          if (submitted) {
+            if (opt === q.correct_answer) cls += ' quiz-option-correct'
+            else if (opt === selected && opt !== q.correct_answer) cls += ' quiz-option-wrong'
+          } else if (opt === selected) {
+            cls += ' quiz-option-selected'
+          }
+          return (
+            <button
+              key={oi}
+              className={cls}
+              onClick={() => onSelect(opt)}
+              disabled={submitted}
+            >
+              <span className="quiz-option-letter">{String.fromCharCode(65 + oi)}</span>
+              {opt}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Explanation after submit */}
+      {submitted && q.explanation && (
+        <p className="quiz-explanation">💡 {q.explanation}</p>
+      )}
+
+      {/* Action buttons */}
+      <div className="quiz-actions">
+        {!submitted ? (
+          <button
+            className="submit-btn"
+            style={{ padding: '10px 24px', fontSize: '14px' }}
+            onClick={onSubmit}
+            disabled={!selected}
+          >
+            Submit Answer
+          </button>
+        ) : (
+          <button
+            className="submit-btn"
+            style={{ padding: '10px 24px', fontSize: '14px' }}
+            onClick={onNext}
+          >
+            {current + 1 < questions.length ? 'Next Question →' : 'See Results 🏁'}
+          </button>
+        )}
+      </div>
+    </div>
+  )
 }
