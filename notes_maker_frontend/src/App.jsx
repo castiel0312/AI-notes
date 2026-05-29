@@ -1,31 +1,8 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000'
 
-const SHANTANU_QUOTES = [
-  "I love beer! 🍺",
-  "Bhai padh le, exam aane wala hai 📚",
-  "Notes banao, nahi toh rona padega 😭",
-  "Ek aur chai ho jaaye? ☕",
-  "TSP solve karna hai? Brute force maar do 💪",
-  "Sleep is overrated, notes are not 🌙",
-  "I didn't choose the study life, the study life chose me 😤",
-  "Knapsack problem? My life is a knapsack problem 🎒",
-]
-
-const KHORIA_QUOTES = [
-  "Are you a PDF? Because I want to extract everything from you 😏",
-  "Is your name Google? Because you have everything I've been searching for 🔍",
-  "Do you have a map? I keep getting lost in your eyes 🗺️",
-  "Are you a compiler? Because you make my heart run without errors ❤️",
-  "I must be a recursive function, because I keep coming back to you 🔄",
-  "You must be a keyboard shortcut, because you make everything easier 💻",
-  "Are you Wi-Fi? Because I'm feeling a connection 📶",
-  "You're like a good algorithm — efficient, elegant, and hard to forget 🧠",
-  "Is your name Stack? Because I can't pop you out of my mind 📚",
-  "You must be a bug, because I can't stop thinking about you 🐛",
-]
 
 const LANGUAGES = [
   { code: 'en', name: 'English', flag: '🇬🇧' },
@@ -45,7 +22,7 @@ const LANGUAGES = [
 const UI_TEXT = {
   en: {
     title: 'Shantanu', online: 'Online',
-    dropText: 'Hi i am adwika feed me your data =]', browse: 'browse',
+    dropText: 'Hi please upload your data!', browse: 'browse',
     dropHint: 'Supports PDF, PPTX, PNG, JPG',
     addMore: '+ Add more',
     modeLabel: 'What type of notes do you want?',
@@ -61,7 +38,7 @@ const UI_TEXT = {
     downloadPdf: '⬇ Download PDF',
     listenAudio: '🔊 Listen',
     noText: 'No text could be extracted from this file.',
-    footer: 'Made with ❤️ by Aditya V · Powered by Groq & Sarvam AI',
+    footer: 'Powered by Groq & Sarvam AI',
   },
   hi: {
     title: 'शंतनु', online: 'ऑनलाइन',
@@ -117,13 +94,7 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [results, setResults] = useState(null)
   const [error, setError] = useState(null)
-  const [khoriaQuote] = useState(
-    () => KHORIA_QUOTES[Math.floor(Math.random() * KHORIA_QUOTES.length)]
-  )
   const [dragOver, setDragOver] = useState(false)
-  const [quote] = useState(
-    () => SHANTANU_QUOTES[Math.floor(Math.random() * SHANTANU_QUOTES.length)]
-  )
   const [speaking, setSpeaking] = useState({})
 
   // ── Quiz state ──────────────────────────────────────────────────────────────
@@ -255,11 +226,6 @@ export default function App() {
     a.click()
   }
 
-  function playAudio(audioUrl, key) {
-    // audioRefs not used — TTS handled by Web Speech API (speakText)
-    void audioUrl; void key;
-  }
-
   // ── Quiz: fetch quiz for a specific result card ────────────────────────────
   async function handleGenerateQuiz(resultIndex, filename) {
     const fileObj = files.find(f => f.name === filename)
@@ -343,11 +309,7 @@ export default function App() {
       {/* Header */}
       <header className="header">
         <div className="header-inner">
-          <div className="bot-avatar">🤖</div>
-          <div className="bot-info">
-            <h1 className="bot-name">{ui.title}</h1>
-            <span className="bot-status">● {ui.online}</span>
-          </div>
+          <h1 className="bot-name">AI Notes Generator</h1>
           {/* Language selector in header */}
           <div className="lang-selector-header">
             <select
@@ -362,7 +324,6 @@ export default function App() {
             </select>
           </div>
         </div>
-        <div className="bot-quote">"{quote}"</div>
       </header>
 
       <main className="main">
@@ -507,14 +468,8 @@ export default function App() {
       </main>
 
       <footer className="footer">
-        {/* Khoria promo banner */}
         <div className="promo-banner">
-          <span className="promo-avatar">🧑‍🏫</span>
-          <div className="promo-text">
-            <span className="promo-name">Khoria says:</span>
-            <span className="promo-flirt">"{khoriaQuote}"</span>
-            <span className="promo-msg">👉 Go to these websites for more amazing notes!</span>
-          </div>
+          <span className="promo-msg">👉 Go to these websites for more amazing notes!</span>
           <div className="promo-links">
             <a href="https://www.notego.in/" target="_blank" rel="noopener noreferrer" className="promo-link">
               🗒️ NoteGo
